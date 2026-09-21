@@ -1,0 +1,173 @@
+package br.ufal.ic.p2.wepayu.utils;
+
+import br.ufal.ic.p2.wepayu.models.*;
+import org.w3c.dom.*;
+import javax.xml.parsers.*;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.File;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.HashMap;
+
+public class XMLHelper {
+
+    public static void salvar(HashMap<String, Empregado> empregados, int identInt) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.newDocument();
+
+            Element raiz = doc.createElement("sistema");
+            raiz.setAttribute("proximoId", String.valueOf(identInt));
+            doc.appendChild(raiz);
+
+            for (String id : empregados.keySet()) {
+                Empregado emp = empregados.get(id);
+                Element elemento = doc.createElement("empregado");
+                elemento.setAttribute("id", id);
+                elemento.setAttribute("nome", emp.getNome());
+                elemento.setAttribute("endereco", emp.getEndereco());
+                elemento.setAttribute("salario", emp.getSalario().toString());
+                elemento.setAttribute("tipo", emp.getTipo());
+
+                if (emp instanceof Comissionado) {
+                    elemento.setAttribute("comissao", ((Comissionado) emp).getComissao().toString());
+                }
+
+                if (emp instanceof Horista) {
+                    Horista horista = (Horista) emp;
+                    for (CartaoDePonto cartao : horista.getCartoes()) {
+                        Element elemCartao = doc.createElement("cartao");
+                        elemCartao.setAttribute("data", cartao.getData().toString());
+                        elemCartao.setAttribute("horas", cartao.getHoras().toString());
+                        elemento.appendChild(elemCartao);
+                    }
+                }
+
+                if (emp instanceof Comissionado) {
+                    Comissionado comissionado = (Comissionado) emp;
+                    for (ResultadoVenda venda : comissionado.getVendas()) {
+                        Element elemVenda = doc.createElement("venda");
+                        elemVenda.setAttribute("data", venda.getData().toString());
+                        elemVenda.setAttribute("valor", venda.getValor().toString());
+                        elemento.appendChild(elemVenda);
+                    }
+                }
+
+                if (emp.isSindicalizado()) {
+                    elemento.setAttribute("sindicalizado", "true");
+                    elemento.setAttribute("idSindicato", emp.getMembroSindicato().getIdSindicato());
+                    elemento.setAttribute("taxaSindical", emp.getMembroSindicato().getTaxaSindical().toString());
+                    for (TaxaServico taxa : emp.getMembroSindicato().getTaxasServico()) {
+                        Element elemTaxa = doc.createElement("taxa");
+                        elemTaxa.setAttribute("data", taxa.getData().toString());
+                        elemTaxa.setAttribute("valor", taxa.getValor().toString());
+                        elemento.appendChild(elemTaxa);
+                    }
+                } else {
+                    elemento.setAttribute("sindicalizado", "false");
+                }
+
+                raiz.appendChild(elemento);
+            }
+
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.transform(new DOMSource(doc), new StreamResult(new File("dados.xml")));
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static HashMap<String, Empregado> carregar() {
+        HashMap<String, Empregado> empregados = new HashMap<>();
+        File arquivo = new File("dados.xml");
+
+        if (!arquivo.exists()) return empregados;
+
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(arquivo);
+
+            NodeList lista = doc.getElementsByTagName("empregado");
+
+            for (int i = 0; i < lista.getLength(); i++) {
+                Element elemento = (Element) lista.item(i);
+                String id = elemento.getAttribute("id");
+                String nome = elemento.getAttribute("nome");
+                String endereco = elemento.getAttribute("endereco");
+                BigDecimal salario = new BigDecimal(elemento.getAttribute("salario"));
+                String tipo = elemento.getAttribute("tipo");
+
+                Empregado emp;
+                if (tipo.equals("comissionado")) {
+                    BigDecimal comissao = new BigDecimal(elemento.getAttribute("comissao"));
+                    emp = new Comissionado(nome, endereco, salario, comissao);
+                } else if (tipo.equals("horista")) {
+                    emp = new Horista(nome, endereco, salario);
+                } else {
+                    emp = new Assalariado(nome, endereco, salario);
+                }
+
+                empregados.put(id, emp);
+
+                if (emp instanceof Horista) {
+                    NodeList cartoes = elemento.getElementsByTagName("cartao");
+                    for (int j = 0; j < cartoes.getLength(); j++) {
+                        Element elemCartao = (Element) cartoes.item(j);
+                        LocalDate data = LocalDate.parse(elemCartao.getAttribute("data"));
+                        BigDecimal horas = new BigDecimal(elemCartao.getAttribute("horas"));
+                        ((Horista) emp).lancaCartao(data, horas);
+                    }
+                }
+
+                if (emp instanceof Comissionado) {
+                    NodeList vendas = elemento.getElementsByTagName("venda");
+                    for (int j = 0; j < vendas.getLength(); j++) {
+                        Element elemVenda = (Element) vendas.item(j);
+                        LocalDate data = LocalDate.parse(elemVenda.getAttribute("data"));
+                        BigDecimal valor = new BigDecimal(elemVenda.getAttribute("valor"));
+                        ((Comissionado) emp).lancaVenda(data, valor);
+                    }
+                }
+
+                if (elemento.getAttribute("sindicalizado").equals("true")) {
+                    String idSindicato = elemento.getAttribute("idSindicato");
+                    BigDecimal taxaSindical = new BigDecimal(elemento.getAttribute("taxaSindical"));
+                    MembroSindicato membro = new MembroSindicato(idSindicato, taxaSindical);
+                    
+                    NodeList taxas = elemento.getElementsByTagName("taxa");
+                    for (int j = 0; j < taxas.getLength(); j++) {
+                        Element elemTaxa = (Element) taxas.item(j);
+                        LocalDate data = LocalDate.parse(elemTaxa.getAttribute("data"));
+                        BigDecimal valor = new BigDecimal(elemTaxa.getAttribute("valor"));
+                        membro.lancaTaxaServico(data, valor);
+                    }
+                    emp.setMembroSindicato(membro);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return empregados;
+    }
+
+    public static int carregarProximoId() {
+        File arquivo = new File("dados.xml");
+        if (!arquivo.exists()) return 1;
+
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(arquivo);
+            Element raiz = doc.getDocumentElement();
+            return Integer.parseInt(raiz.getAttribute("proximoId"));
+        } catch (Exception e) {
+            return 1;
+        }
+    }
+}
