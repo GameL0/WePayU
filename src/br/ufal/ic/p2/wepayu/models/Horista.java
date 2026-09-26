@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class Horista extends Empregado {
     private List<CartaoDePonto> cartoes = new ArrayList<>();
@@ -15,6 +17,21 @@ public class Horista extends Empregado {
     @Override
     public String getTipo() {
         return "horista";
+    }
+
+    @Override
+    public boolean isDiaDePagamento(LocalDate dataFolha) {
+        return dataFolha.getDayOfWeek().getValue() == 5;
+    }
+
+    @Override
+    public LocalDate getDataContrato() {
+        if (cartoes.isEmpty()) return LocalDate.of(2005, 1, 1);
+        LocalDate min = cartoes.get(0).getData();
+        for (CartaoDePonto c : cartoes) {
+            if (c.getData().isBefore(min)) min = c.getData();
+        }
+        return min;
     }
 
     public void lancaCartao(LocalDate data, BigDecimal horas) {
@@ -49,4 +66,25 @@ public class Horista extends Empregado {
     }
 
     public List<CartaoDePonto> getCartoes() { return cartoes; }
+
+    @Override
+    public void adicionarDetalhesXML(Document doc, Element elemento) {
+        for (CartaoDePonto cartao : cartoes) {
+            Element elemCartao = doc.createElement("cartao");
+            elemCartao.setAttribute("data", cartao.getData().toString());
+            elemCartao.setAttribute("horas", cartao.getHoras().toString());
+            elemento.appendChild(elemCartao);
+        }
+    }
+
+    @Override
+    public void carregarDetalhesXML(Element elemento) {
+        org.w3c.dom.NodeList cartoesList = elemento.getElementsByTagName("cartao");
+        for (int j = 0; j < cartoesList.getLength(); j++) {
+            Element elemCartao = (Element) cartoesList.item(j);
+            LocalDate data = LocalDate.parse(elemCartao.getAttribute("data"));
+            BigDecimal horas = new BigDecimal(elemCartao.getAttribute("horas"));
+            lancaCartao(data, horas);
+        }
+    }
 }

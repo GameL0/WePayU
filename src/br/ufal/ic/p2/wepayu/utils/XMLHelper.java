@@ -8,7 +8,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.HashMap;
 
 public class XMLHelper {
@@ -32,29 +31,7 @@ public class XMLHelper {
                 elemento.setAttribute("salario", emp.getSalario().toString());
                 elemento.setAttribute("tipo", emp.getTipo());
 
-                if (emp instanceof Comissionado) {
-                    elemento.setAttribute("comissao", ((Comissionado) emp).getComissao().toString());
-                }
-
-                if (emp instanceof Horista) {
-                    Horista horista = (Horista) emp;
-                    for (CartaoDePonto cartao : horista.getCartoes()) {
-                        Element elemCartao = doc.createElement("cartao");
-                        elemCartao.setAttribute("data", cartao.getData().toString());
-                        elemCartao.setAttribute("horas", cartao.getHoras().toString());
-                        elemento.appendChild(elemCartao);
-                    }
-                }
-
-                if (emp instanceof Comissionado) {
-                    Comissionado comissionado = (Comissionado) emp;
-                    for (ResultadoVenda venda : comissionado.getVendas()) {
-                        Element elemVenda = doc.createElement("venda");
-                        elemVenda.setAttribute("data", venda.getData().toString());
-                        elemVenda.setAttribute("valor", venda.getValor().toString());
-                        elemento.appendChild(elemVenda);
-                    }
-                }
+                emp.adicionarDetalhesXML(doc, elemento);
 
                 if (emp.isSindicalizado()) {
                     elemento.setAttribute("sindicalizado", "true");
@@ -112,42 +89,24 @@ public class XMLHelper {
                     emp = new Assalariado(nome, endereco, salario);
                 }
 
-                empregados.put(id, emp);
-
-                if (emp instanceof Horista) {
-                    NodeList cartoes = elemento.getElementsByTagName("cartao");
-                    for (int j = 0; j < cartoes.getLength(); j++) {
-                        Element elemCartao = (Element) cartoes.item(j);
-                        LocalDate data = LocalDate.parse(elemCartao.getAttribute("data"));
-                        BigDecimal horas = new BigDecimal(elemCartao.getAttribute("horas"));
-                        ((Horista) emp).lancaCartao(data, horas);
-                    }
-                }
-
-                if (emp instanceof Comissionado) {
-                    NodeList vendas = elemento.getElementsByTagName("venda");
-                    for (int j = 0; j < vendas.getLength(); j++) {
-                        Element elemVenda = (Element) vendas.item(j);
-                        LocalDate data = LocalDate.parse(elemVenda.getAttribute("data"));
-                        BigDecimal valor = new BigDecimal(elemVenda.getAttribute("valor"));
-                        ((Comissionado) emp).lancaVenda(data, valor);
-                    }
-                }
+                emp.carregarDetalhesXML(elemento);
 
                 if (elemento.getAttribute("sindicalizado").equals("true")) {
                     String idSindicato = elemento.getAttribute("idSindicato");
                     BigDecimal taxaSindical = new BigDecimal(elemento.getAttribute("taxaSindical"));
                     MembroSindicato membro = new MembroSindicato(idSindicato, taxaSindical);
-                    
+
                     NodeList taxas = elemento.getElementsByTagName("taxa");
                     for (int j = 0; j < taxas.getLength(); j++) {
                         Element elemTaxa = (Element) taxas.item(j);
-                        LocalDate data = LocalDate.parse(elemTaxa.getAttribute("data"));
+                        java.time.LocalDate data = java.time.LocalDate.parse(elemTaxa.getAttribute("data"));
                         BigDecimal valor = new BigDecimal(elemTaxa.getAttribute("valor"));
                         membro.lancaTaxaServico(data, valor);
                     }
                     emp.setMembroSindicato(membro);
                 }
+
+                empregados.put(id, emp);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

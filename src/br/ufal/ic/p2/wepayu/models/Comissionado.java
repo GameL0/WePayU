@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class Comissionado extends Empregado {
     private BigDecimal comissao;
@@ -39,12 +41,47 @@ public class Comissionado extends Empregado {
     }
 
     @Override
-    public String getAtributo(String atributo){
-        if(atributo.equals("comissao")){
+    public boolean isDiaDePagamento(LocalDate dataFolha) {
+        if (dataFolha.getDayOfWeek().getValue() != 5) return false;
+        LocalDate inicio = LocalDate.of(2005, 1, 1);
+        long semanas = java.time.temporal.ChronoUnit.WEEKS.between(inicio, dataFolha);
+        return (semanas % 2 != 0);
+    }
+
+    @Override
+    public LocalDate getDataContrato() {
+        return LocalDate.of(2005, 1, 1);
+    }
+
+    @Override
+    public String getAtributo(String atributo) throws Exception {
+        if (atributo.equals("comissao")) {
             return getComissao().setScale(2).toString().replace(".", ",");
         }
         return super.getAtributo(atributo);
     }
 
+    public void setComissao(BigDecimal comissao) { this.comissao = comissao; }
 
+    @Override
+    public void adicionarDetalhesXML(Document doc, Element elemento) {
+        elemento.setAttribute("comissao", getComissao().toString());
+        for (ResultadoVenda venda : vendas) {
+            Element elemVenda = doc.createElement("venda");
+            elemVenda.setAttribute("data", venda.getData().toString());
+            elemVenda.setAttribute("valor", venda.getValor().toString());
+            elemento.appendChild(elemVenda);
+        }
+    }
+
+    @Override
+    public void carregarDetalhesXML(Element elemento) {
+        org.w3c.dom.NodeList vendasList = elemento.getElementsByTagName("venda");
+        for (int j = 0; j < vendasList.getLength(); j++) {
+            Element elemVenda = (Element) vendasList.item(j);
+            LocalDate data = LocalDate.parse(elemVenda.getAttribute("data"));
+            BigDecimal valor = new BigDecimal(elemVenda.getAttribute("valor"));
+            lancaVenda(data, valor);
+        }
+    }
 }
