@@ -69,6 +69,7 @@ public class Horista extends Empregado {
 
     @Override
     public void adicionarDetalhesXML(Document doc, Element elemento) {
+        super.adicionarDetalhesXML(doc, elemento);
         for (CartaoDePonto cartao : cartoes) {
             Element elemCartao = doc.createElement("cartao");
             elemCartao.setAttribute("data", cartao.getData().toString());
@@ -79,6 +80,7 @@ public class Horista extends Empregado {
 
     @Override
     public void carregarDetalhesXML(Element elemento) {
+        super.carregarDetalhesXML(elemento);
         org.w3c.dom.NodeList cartoesList = elemento.getElementsByTagName("cartao");
         for (int j = 0; j < cartoesList.getLength(); j++) {
             Element elemCartao = (Element) cartoesList.item(j);

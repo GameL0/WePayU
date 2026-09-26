@@ -107,9 +107,21 @@ public abstract class Empregado {
 
 
     public void adicionarDetalhesXML(Document doc, Element elemento) {
+        if (metodoPagamento != null) elemento.setAttribute("metodoPagamento", metodoPagamento);
+        if (banco != null) elemento.setAttribute("banco", banco);
+        if (agencia != null) elemento.setAttribute("agencia", agencia);
+        if (contaCorrente != null) elemento.setAttribute("contaCorrente", contaCorrente);
+        if (dataUltimoPagamento != null) elemento.setAttribute("dataUltimoPagamento", dataUltimoPagamento.toString());
+        elemento.setAttribute("dividaSindical", dividaSindical.toString());
     }
 
     public void carregarDetalhesXML(Element elemento) {
+        if (elemento.hasAttribute("metodoPagamento")) metodoPagamento = elemento.getAttribute("metodoPagamento");
+        if (elemento.hasAttribute("banco")) banco = elemento.getAttribute("banco");
+        if (elemento.hasAttribute("agencia")) agencia = elemento.getAttribute("agencia");
+        if (elemento.hasAttribute("contaCorrente")) contaCorrente = elemento.getAttribute("contaCorrente");
+        if (elemento.hasAttribute("dataUltimoPagamento")) dataUltimoPagamento = java.time.LocalDate.parse(elemento.getAttribute("dataUltimoPagamento"));
+        if (elemento.hasAttribute("dividaSindical")) dividaSindical = new java.math.BigDecimal(elemento.getAttribute("dividaSindical"));
     }
 
     public void lancaCartao(LocalDate data, BigDecimal horas) throws EmpregadoNaoEHoristaException {

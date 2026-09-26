@@ -65,6 +65,7 @@ public class Comissionado extends Empregado {
 
     @Override
     public void adicionarDetalhesXML(Document doc, Element elemento) {
+        super.adicionarDetalhesXML(doc, elemento);
         elemento.setAttribute("comissao", getComissao().toString());
         for (ResultadoVenda venda : vendas) {
             Element elemVenda = doc.createElement("venda");
@@ -76,6 +77,7 @@ public class Comissionado extends Empregado {
 
     @Override
     public void carregarDetalhesXML(Element elemento) {
+        super.carregarDetalhesXML(elemento);
         org.w3c.dom.NodeList vendasList = elemento.getElementsByTagName("venda");
         for (int j = 0; j < vendasList.getLength(); j++) {
             Element elemVenda = (Element) vendasList.item(j);

@@ -117,7 +117,6 @@ public class FolhaDePagamentoService {
               .append(padLeft(formatarDinheiro(liq), 15)).append(" ")
               .append(getMetodoString(emp)).append("\n");
               
-            h.getCartoes().removeIf(c -> !c.getData().isBefore(inicio) && c.getData().isBefore(fim));
             h.setDataUltimoPagamento(dataFolha);
         }
         sb.append("\n").append(padRight("TOTAL HORISTAS", 36)).append(" ")
@@ -205,7 +204,6 @@ public class FolhaDePagamentoService {
               .append(padLeft(formatarDinheiro(liq), 15)).append(" ")
               .append(getMetodoString(emp)).append("\n");
               
-            c.getVendas().removeIf(v -> !v.getData().isBefore(inicio) && v.getData().isBefore(fim));
             c.setDataUltimoPagamento(dataFolha);
         }
         sb.append("\n").append(padRight("TOTAL COMISSIONADOS", 21)).append(" ")
