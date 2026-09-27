@@ -191,19 +191,19 @@ public class Facade {
         return vendaService.getVendasRealizadas(empregados, emp, dataInicial, dataFinal);
     }
 
-    // --- MÉTODOS NOVOS DA US 6 ---
+    
 
     private void mudarTipoEmpregado(String emp, Empregado empregadoBase, String novoTipo, BigDecimal novoSalario, BigDecimal novaComissao) throws Exception {
         Empregado novoEmpregado = EmpregadoFactory.criarEmpregado(novoTipo, empregadoBase.getNome(), empregadoBase.getEndereco(), novoSalario, novaComissao);
 
-        // Transfere o estado do antigo para o novo
+        
         novoEmpregado.setMetodoPagamento(empregadoBase.getMetodoPagamento());
         novoEmpregado.setBanco(empregadoBase.getBanco());
         novoEmpregado.setAgencia(empregadoBase.getAgencia());
         novoEmpregado.setContaCorrente(empregadoBase.getContaCorrente());
         novoEmpregado.setMembroSindicato(empregadoBase.getMembroSindicato());
 
-        // Substitui silenciosamente no mapa mantendo a mesma ID
+        
         empregados.put(emp, novoEmpregado);
     }
 
