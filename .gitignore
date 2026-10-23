@@ -27,4 +27,5 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-/analise_wepayu.md
+*.class
+.idea/workspace.xml
