@@ -29,3 +29,8 @@ bin/
 .DS_Store
 *.class
 .idea/workspace.xml
+
+### WePayU ###
+dados.xml
+.idea/
+*.iml
