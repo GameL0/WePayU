@@ -163,9 +163,9 @@ src/
 
 A `Facade` não tem regra de negócio: ela só repassa cada chamada para o serviço responsável (`GerenciaEmpregado`, `GerenciaFolha`, etc.). Toda operação que altera o estado passa por `Sistema.executar(...)`, o que centraliza o controle de undo/redo e de sistema encerrado.
 
-### Polimorfismo em vez de checagem de tipo (sem `instanceof`)
+### Polimorfismo em vez de checagem de tipo
 
-O projeto **não usa `instanceof`** em nenhum lugar. Cada comportamento que depende do tipo fica na própria classe:
+Cada comportamento que depende do tipo fica na própria classe:
 
 - `Empregado` é abstrata e cada subtipo implementa `getTipo()`, `agendaPadrao()` e `criarContracheque(Periodo)`. O cálculo do salário bruto de horista, assalariado e comissionado fica em cada subclasse.
 - Operações que só valem para um tipo usam métodos sobrescritos: `Empregado.comoHorista()` e `comoComissionado()` lançam exceção por padrão, e só `Horista`/`Comissionado` sobrescrevem retornando `this`. Assim, lançar um cartão para um assalariado gera "Empregado nao eh horista." sem nenhum `if` de tipo.
