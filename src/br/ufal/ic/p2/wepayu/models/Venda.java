@@ -6,9 +6,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class Venda extends LancamentoMonetario {
-    public Venda() {
-    }
-
     public Venda(LocalDate data, BigDecimal valor) throws ValorNaoPositivoException {
         super(data, valor);
     }

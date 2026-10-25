@@ -1,6 +1,8 @@
 package br.ufal.ic.p2.wepayu.models;
 
+import br.ufal.ic.p2.wepayu.conversao.ConversorNumero;
 import br.ufal.ic.p2.wepayu.exception.WePayUException;
+import br.ufal.ic.p2.wepayu.exception.naoencontrado.AtributoNaoExisteException;
 import br.ufal.ic.p2.wepayu.exception.negativo.TaxaSindicalNegativaException;
 import br.ufal.ic.p2.wepayu.exception.negativo.ValorNaoPositivoException;
 import br.ufal.ic.p2.wepayu.exception.nulo.IdentificacaoSindicatoNulaException;
@@ -11,14 +13,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MembroSindicato extends Filiacao {
-    private String idSindicato;
-    private BigDecimal taxaSindical;
-    private List<TaxaServico> taxasServico = new ArrayList<>();
-
-    public MembroSindicato() {
-    }
+    private final String idSindicato;
+    private final BigDecimal taxaSindical;
+    private final List<TaxaServico> taxasServico;
 
     public MembroSindicato(String idSindicato, BigDecimal taxaSindical) throws WePayUException {
+        this(idSindicato, taxaSindical, new ArrayList<>());
+    }
+
+    public MembroSindicato(String idSindicato, BigDecimal taxaSindical, List<TaxaServico> taxasServico) throws WePayUException {
         if (idSindicato == null || idSindicato.isEmpty()) {
             throw new IdentificacaoSindicatoNulaException();
         }
@@ -27,6 +30,7 @@ public class MembroSindicato extends Filiacao {
         }
         this.idSindicato = idSindicato;
         this.taxaSindical = taxaSindical;
+        this.taxasServico = taxasServico;
     }
 
     @Override
@@ -36,9 +40,13 @@ public class MembroSindicato extends Filiacao {
 
     @Override
     public Filiacao sindicalizar(String idSindicato, BigDecimal taxaSindical) throws WePayUException {
-        MembroSindicato atualizado = new MembroSindicato(idSindicato, taxaSindical);
-        atualizado.taxasServico = new ArrayList<>(taxasServico);
-        return atualizado;
+        return new MembroSindicato(idSindicato, taxaSindical, new ArrayList<>(taxasServico));
+    }
+
+    @Override
+    public BigDecimal descontos(Periodo periodo) {
+        BigDecimal taxaDoPeriodo = taxaSindical.multiply(new BigDecimal(periodo.dias()));
+        return taxaDoPeriodo.add(totalTaxasServico(periodo));
     }
 
     @Override
@@ -47,14 +55,20 @@ public class MembroSindicato extends Filiacao {
     }
 
     @Override
-    public MembroSindicato comoMembro() {
-        return this;
+    public String getAtributo(String atributo) throws AtributoNaoExisteException {
+        switch (atributo) {
+            case "idSindicato": return idSindicato;
+            case "taxaSindical": return ConversorNumero.formatarMoeda(taxaSindical);
+            default: throw new AtributoNaoExisteException();
+        }
     }
 
+    @Override
     public void lancaTaxaServico(LocalDate data, BigDecimal valor) throws ValorNaoPositivoException {
         taxasServico.add(new TaxaServico(data, valor));
     }
 
+    @Override
     public BigDecimal totalTaxasServico(Periodo periodo) {
         return LancamentoMonetario.somar(taxasServico, periodo);
     }
@@ -63,23 +77,11 @@ public class MembroSindicato extends Filiacao {
         return idSindicato;
     }
 
-    public void setIdSindicato(String idSindicato) {
-        this.idSindicato = idSindicato;
-    }
-
     public BigDecimal getTaxaSindical() {
         return taxaSindical;
     }
 
-    public void setTaxaSindical(BigDecimal taxaSindical) {
-        this.taxaSindical = taxaSindical;
-    }
-
     public List<TaxaServico> getTaxasServico() {
         return new ArrayList<>(taxasServico);
-    }
-
-    public void setTaxasServico(List<TaxaServico> taxasServico) {
-        this.taxasServico = new ArrayList<>(taxasServico);
     }
 }

@@ -3,10 +3,7 @@ package br.ufal.ic.p2.wepayu.models;
 import java.time.LocalDate;
 
 public abstract class Lancamento {
-    private LocalDate data;
-
-    protected Lancamento() {
-    }
+    private final LocalDate data;
 
     protected Lancamento(LocalDate data) {
         this.data = data;
@@ -20,7 +17,19 @@ public abstract class Lancamento {
         return data;
     }
 
-    public void setData(LocalDate data) {
-        this.data = data;
+    @Override
+    public boolean equals(Object outro) {
+        if (this == outro) {
+            return true;
+        }
+        if (outro == null || getClass() != outro.getClass()) {
+            return false;
+        }
+        return data.equals(((Lancamento) outro).data);
+    }
+
+    @Override
+    public int hashCode() {
+        return data.hashCode();
     }
 }

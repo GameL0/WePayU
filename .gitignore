@@ -34,3 +34,4 @@ bin/
 dados.xml
 .idea/
 *.iml
+/folha-*.txt

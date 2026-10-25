@@ -11,6 +11,11 @@ public class NaoSindicalizado extends Filiacao {
     }
 
     @Override
+    public BigDecimal descontos(Periodo periodo) {
+        return BigDecimal.ZERO;
+    }
+
+    @Override
     public Filiacao sindicalizar(String idSindicato, BigDecimal taxaSindical) throws WePayUException {
         return new MembroSindicato(idSindicato, taxaSindical);
     }
