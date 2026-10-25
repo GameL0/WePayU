@@ -14,7 +14,6 @@ import br.ufal.ic.p2.wepayu.exception.numerico.TaxaSindicalNaoNumericaException;
 import br.ufal.ic.p2.wepayu.exception.numerico.ValorLancamentoNaoNumericoException;
 import br.ufal.ic.p2.wepayu.exception.sindicato.IdSindicatoDuplicadoException;
 import br.ufal.ic.p2.wepayu.models.Empregado;
-import br.ufal.ic.p2.wepayu.models.MembroSindicato;
 import br.ufal.ic.p2.wepayu.models.Periodo;
 
 import java.math.BigDecimal;
@@ -50,18 +49,17 @@ public class GerenciaSindicato {
         if (idMembro == null || idMembro.isEmpty()) {
             throw new IdentificacaoMembroNulaException();
         }
-        MembroSindicato membro = empregados.buscarPorIdSindicato(idMembro)
-                .orElseThrow(MembroNaoExisteException::new)
-                .comoMembroSindicato();
+        Empregado membro = empregados.buscarPorIdSindicato(idMembro)
+                .orElseThrow(MembroNaoExisteException::new);
         LocalDate data = ConversorData.converter(dataInformada, DataInvalidaException::new);
         BigDecimal valor = ConversorNumero.converter(valorInformado, ValorLancamentoNaoNumericoException::new);
         membro.lancaTaxaServico(data, valor);
     }
 
     public String getTaxasServico(String id, String dataInicial, String dataFinal) throws WePayUException {
-        MembroSindicato membro = empregados.buscar(id).comoMembroSindicato();
+        Empregado empregado = empregados.buscar(id);
         Periodo periodo = ConversorData.converterPeriodo(dataInicial, dataFinal);
-        return ConversorNumero.formatarMoeda(membro.totalTaxasServico(periodo));
+        return ConversorNumero.formatarMoeda(empregado.totalTaxasServico(periodo));
     }
 
     private boolean pertenceAOutro(String idSindicato, Empregado empregado) {
